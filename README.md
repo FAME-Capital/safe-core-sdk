@@ -1,26 +1,93 @@
-![license](https://img.shields.io/github/license/safe-global/safe-core-sdk) [![Coverage Status](https://coveralls.io/repos/github/safe-global/safe-core-sdk/badge.svg?branch=main)](https://coveralls.io/github/safe-global/safe-core-sdk?branch=main)
+# Safe Deployments
 
-![Safe_Logos_Core_SDK_Black](https://github.com/safe-global/safe-core-sdk/assets/6764315/7202a24a-2981-4b31-9cf5-ace1c3b2c4fa)
+[![npm version](https://badge.fury.io/js/%40safe-global%2Fsafe-deployments.svg)](https://badge.fury.io/js/%40safe-global%2Fsafe-deployments)
 
-Software developer tools that facilitate the interaction with the Safe [contracts](https://github.com/safe-global/safe-contracts) and [services](https://github.com/safe-global/safe-transaction-service).
+This contract contains a collection of deployments of the contract of the [Safe contracts repository](https://github.com/safe-global/safe-contracts). 
 
-## Guides
+For each deployment the address on the different networks and the abi files are available. To get an overview of the available versions check the available [json assets](./src/assets/).
 
-| Title | Description |
-| ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Integrating the Safe Core SDK](https://github.com/safe-global/safe-core-sdk/blob/main/guides/integrating-the-safe-core-sdk.md) | This guide shows how to use the [Protocol Kit](https://github.com/safe-global/safe-core-sdk/tree/main/packages/protocol-kit) and [API Kit](https://github.com/safe-global/safe-core-sdk/tree/main/packages/api-kit). |
+To add additional deployments please follow the [deployment steps in the Safe contract repository](https://github.com/safe-global/safe-contracts#deployments).
 
-## Packages
+## Install
+- npm - `npm i @safe-global/safe-deployments`
+- yarn - `yarn add @safe-global/safe-deployments`
 
-| Package | Release | Description | 
-| ------------------------------------------------------------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [api-kit](https://github.com/safe-global/safe-core-sdk/tree/main/packages/api-kit)                           | [![NPM Version](https://badge.fury.io/js/%40safe-global%2Fapi-kit.svg)](https://badge.fury.io/js/%40safe-global%2Fapi-kit)                 | [Safe Transaction Service API](https://github.com/safe-global/safe-transaction-service) client library                                                                       |
-| [auth-kit](https://github.com/safe-global/safe-core-sdk/tree/main/packages/auth-kit)                         | [![NPM Version](https://badge.fury.io/js/%40safe-global%2Fauth-kit.svg)](https://badge.fury.io/js/%40safe-global%2Fauth-kit)               | Typescript library to create an Ethereum address and authenticating a blockchain account using an email address, social media account, or traditional crypto wallets like Metamask   |
-| [onramp-kit](https://github.com/safe-global/safe-core-sdk/tree/main/packages/onramp-kit)                     | [![NPM Version](https://badge.fury.io/js/%40safe-global%2Fonramp-kit.svg)](https://badge.fury.io/js/%40safe-global%2Fonramp-kit)           | Typescript library that allows users to buy cryptocurrencies using a credit card and other payment options                                                                           |
-| [protocol-kit](https://github.com/safe-global/safe-core-sdk/tree/main/packages/protocol-kit)                 | [![NPM Version](https://badge.fury.io/js/%40safe-global%2Fprotocol-kit.svg)](https://badge.fury.io/js/%40safe-global%2Fprotocol-kit)       | TypeScript library that facilitates the interaction with the [Safe contracts](https://github.com/safe-global/safe-contracts)                                                |
-| [relay-kit](https://github.com/safe-global/safe-core-sdk/tree/main/packages/relay-kit)                       | ​​​[​![NPM Version](https://badge.fury.io/js/%40safe-global%2Frelay-kit.svg)​](https://badge.fury.io/js/%40safe-global%2Frelay-kit)​             | Library to abstract transaction fees payment (gas fees), allowing the use of native tokens or ERC-20​​                                                                                 |
-| [safe-core-sdk-types](https://github.com/safe-global/safe-core-sdk/tree/main/packages/safe-core-sdk-types)   | [![NPM Version](https://badge.fury.io/js/%40safe-global%2Fsafe-core-sdk-types.svg)](https://badge.fury.io/js/%40safe-global%2Fsafe-core-sdk-types)  | Common types extracted from the [Safe Core SDK](https://github.com/safe-global/safe-core-sdk/tree/main/packages) packages                                                   |
+## Usage
 
-## Playground
+It is possible to directly use the json files in the [assets folder](./src/assets/) that contain the addresses and abi definitions.
 
-This project includes a [playground](https://github.com/safe-global/safe-core-sdk/tree/main/playground/README.md) with a few scripts that can be used as a starting point to use the Safe Core SDK.
+An alternative is to use the JavaScript library methods to query the correct deployment. The library supports different methods to get the deployment of a specific contract.
+
+Each of the method takes an optional `DeploymentFilter` as a parameter.
+
+```ts
+interface DeploymentFilter {
+    version?: string,
+    released?: boolean, // Defaults to true if no filter is specified
+    network?: string // Chain id of the network
+}
+```
+
+The method will return a `SingletonDeployment` object or `undefined` if no deployment was found for the specified filter.
+
+```ts
+interface SingletonDeployment {
+    defaultAddress: string, // Address the contract was deployed to by the Safe team
+    version: string,
+    abi: any[],
+    networkAddresses: Record<string, string>, // Address of the contract by network
+    contractName: string,
+    released: boolean // A released version was audited and has a running bug bounty
+}
+```
+
+- Safe
+```ts
+const safeSingleton = getSafeSingletonDeployment()
+
+// Returns latest contract version, even if not finally released yet
+const safeSingletonNightly = getSafeSingletonDeployment({ released: undefined })
+
+// Returns released contract version for specific network
+const safeSingletonGörli = getSafeSingletonDeployment({ network: "5" })
+
+// Returns released contract version for specific version
+const safeSingleton100 = getSafeSingletonDeployment({ version: "1.0.0" })
+
+// Version with additional events used on L2 networks
+const safeL2Singleton = getSafeL2SingletonDeployment()
+```
+
+- Factories
+```ts
+const proxyFactory = getProxyFactoryDeployment()
+```
+
+- Libraries
+```ts
+const multiSendLib = getMultiSendDeployment()
+
+const multiSendCallOnlyLib = getMultiSendCallOnlyDeployment()
+
+const createCallLib = getCreateCallDeployment()
+```
+
+- Handler
+```ts
+// Returns recommended handler
+const fallbackHandler = getFallbackHandlerDeployment()
+
+const callbackHandler = getDefaultCallbackHandlerDeployment()
+
+const compatHandler = getCompatibilityFallbackHandlerDeployment()
+```
+## Release cycle
+`safe-deployments` release cycle is once per month, except urgent issues that require immediate attention. 
+
+## Notes
+
+A list of network information can be found at [chainid.network](https://chainid.network/)
+
+## License
+
+This library is released under MIT.
