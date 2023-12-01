@@ -1,6 +1,6 @@
-import { IAdapter, UserInfo } from '@web3auth/base'
+import { IAdapter, SafeEventEmitterProvider, UserInfo } from '@web3auth/base'
 import { ModalConfig, Web3Auth, Web3AuthOptions } from '@web3auth/modal'
-import { ExternalProvider } from '@ethersproject/providers'
+import { Eip1193Provider } from 'ethers'
 
 import { getErrorMessage } from '@safe-global/auth-kit/lib/errors'
 import { Web3AuthConfig, Web3AuthEvent, Web3AuthEventListener } from './types'
@@ -12,15 +12,15 @@ import type { AuthKitSignInData } from '@safe-global/auth-kit/types'
  * @class
  */
 export class Web3AuthModalPack extends AuthKitBasePack {
-  #provider: ExternalProvider | null
-  #config: Web3AuthConfig
+  #provider: SafeEventEmitterProvider | null
+  #config?: Web3AuthConfig
   web3Auth?: Web3Auth
 
   /**
    * Instantiate the Web3AuthModalPack
    * @param config Web3Auth specific config
    */
-  constructor(config: Web3AuthConfig) {
+  constructor(config?: Web3AuthConfig) {
     super()
     this.#config = config
     this.#provider = null
@@ -67,7 +67,8 @@ export class Web3AuthModalPack extends AuthKitBasePack {
     this.#provider = await this.web3Auth.connect()
 
     const eoa = await this.getAddress()
-    const safes = await this.getSafes(this.#config?.txServiceUrl || '')
+    const chainId = await this.getChainId()
+    const safes = await this.getSafes(chainId, this.#config?.txServiceUrl)
 
     const signInData = {
       eoa,
@@ -77,8 +78,8 @@ export class Web3AuthModalPack extends AuthKitBasePack {
     return signInData
   }
 
-  getProvider(): ExternalProvider | null {
-    return this.#provider
+  getProvider(): Eip1193Provider | null {
+    return this.#provider as Eip1193Provider
   }
 
   /**
